@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>终极进化</title>
+	<meta charset="utf-8" />
+	<style type="text/css">
+	td {
+		width: 15px;
+		height: 15px;
+		background-color: black;
+	}
+	</style>
+</head>
+<body onLoad="init();">
+
+<table align="center" border="1" width="800">
+ 	<tr>
+ 		<td>
+ 			<br/>
+ 			<table align="center" border="1" width="600" height = "70">
+ 				<td width="100" align="center" style="color: white; font-size: 28px;">
+ 				<b>避开<strong><font color="#FF4300">熔岩</font></strong>，吞噬<strong><font color="#00FFFF">晶体矿</font></strong>，变异出耐高温基因</b>
+ 				</td>
+ 			</table>
+
+ 			<br/>
+
+			<table align="center" cellpadding="0" cellspacing="0" id="myTable">
+			</table>
+
+ 			<table align="center" border="1" width="250" height = "50">
+
+
+ 				<td id = "count" width="150" align="center" style="color: yellow; font-size: 23px;">
+ 				按R键开始
+ 				</td>
+
+ 			</table>
+
+
+ 			<table align="center" border="0" width="180" height = "50">
+ 				<td width="120" align="center" style="color: yellow; font-size: 23px;">
+
+ 				<input type="button" value="重生(R)" style="width:150px; height:35px; font-size: 23px; " id = "alive" onClick="space();" >
+
+ 				</td>
+
+ 			</table>
+
+ 			<br/>
+		</td>
+	</tr>
+
+</table>
+
+
+</body>
+</html>
+<script>
+var gaming;
+var foodCount = 0;
+var countMax = 20;
+
+var button;
+var display = document.getElementById("count");
+
+
+
+var sceneData = {
+	maxr: 23,//场景高度
+	maxc: 33,//场景宽度
+	speed: 100,
+	data : [],//场景地图
+	snakeData: [],
+	dataType: ["活动场地", "蛇", "熔岩", "食物", "熔岩蛇"],//0场地、1蛇身、2熔岩、3食物、4熔岩蛇
+	dataTypeColor: ["#BDBDBD", "green", "#FF4300", "#00FFFF", "yellow"],
+	direct: {r:0, c:-1 }   //移动方向
+}
+
+	function init() {
+		button = document.getElementById("alive");
+
+		gameInit();
+
+		//gameStart();
+
+	}
+
+	function gameInit(){
+		var borderland = 3;
+		//创建场景地图
+		for(var r=0; r< sceneData.maxr ; r++){
+			var rdata = [];
+			for(var c=0; c < sceneData.maxc ; c++){
+				if(r < borderland || c < borderland || r > sceneData.maxr - borderland -1 || c > sceneData.maxc - borderland -1)
+					//边界设为墙
+					var cdata = {r:r, c:c , type : 2 };
+				else
+					var cdata = {r:r, c:c , type : 0 };
+				rdata.push(cdata);
+			}
+			sceneData.data.push(rdata);
+		}
+
+		//在中场创建蛇
+		var snakeBeginr = Math.ceil( sceneData.maxr / 2 );
+		var snakeBeginc = Math.ceil( sceneData.maxc / 2 );
+		sceneData.snakeData.push({r: snakeBeginr, c: snakeBeginc});
+
+		//蛇合并到场景数据
+		for(var i=0; i<sceneData.snakeData.length; i++){
+			var snakeNode = sceneData.snakeData[i];
+			sceneData.data[ snakeNode.r ][ snakeNode.c ].type = 1;
+		}
+
+		refreshView();
+
+
+	}
+
+	function gameStart(){
+		//console.log("开始");
+		gaming = true;
+		button.value = "结束(R)";
+
+		//初始食物创建
+		for (var i = 0; i < 5; i++) {
+			makeFood();
+		}
+
+		setTimeout(fireMaker, 1500);
+		foodMaker();
+		moving();
+	}
+
+	function gameOver(){
+		//console.log("结束");
+		gaming = false;
+		button.value = "重生(R)";
+
+
+		//console.log("gameOver");
+	}
+
+	//刷新界面
+	function refreshView(){//刷新界面
+		var myTable = document.getElementById('myTable');
+		var tableHtml = "";
+		for( var r =0; r< sceneData.data.length; r++){
+			var rdata = sceneData.data[r];
+			tableHtml +="<tr>";
+			for(var c=0; c< rdata.length; c++){
+				var color = sceneData.dataTypeColor[rdata[c].type];
+				tableHtml += "<td style='background-color:"+ color +";'>";
+				tableHtml += "</td>";
+			}
+			tableHtml +="</tr>";
+		}
+		myTable.innerHTML = tableHtml;
+	}
+
+	//制作食物
+	function makeFood() {
+		var randomR = Math.ceil( Math.random()*10000 % sceneData.maxr ) -1 ;
+		var randomC = Math.ceil( Math.random()*10000 % sceneData.maxc ) -1 ;
+		var localNode = sceneData.data[ randomR ][ randomC ];
+		if(localNode.type == 0){
+			sceneData.data[ randomR ][ randomC ].type = 3;
+			foodCount++;
+			return true;
+		}
+		else{
+			return makeFood();
+		}
+	}
+
+	function foodMaker(){
+		if(gaming == false)
+			return;
+		if(foodCount < 8)
+			makeFood();
+		setTimeout(foodMaker, 2000);
+	}
+
+var t;//计时器
+
+	function fireMaker() {
+		if(gaming == false)
+			return;
+		t = setTimeout(fireMaker, 1200);
+
+		var randomR = Math.ceil( Math.random()*10000 % sceneData.maxr ) -1 ;
+		var randomC = Math.ceil( Math.random()*10000 % sceneData.maxc ) -1 ;
+		var localNode = sceneData.data[ randomR ][ randomC ];
+
+		if((localNode.type == 0 || localNode.type == 3) && Math.sqrt(Math.pow(randomR - sceneData.snakeData[0].r, 2) + Math.pow(randomC - sceneData.snakeData[0].c, 2)) > 3){
+			sceneData.data[ randomR ][ randomC ].type = 2;
+			if(localNode.type == 3){
+				foodCount--;
+			}
+			return true;
+		}
+		else{
+			clearTimeout(t);
+			return fireMaker();
+		}
+	}
+
+	function moving() {
+		if(gaming == false)
+			return;
+		//循环计时器
+		setTimeout(moving, sceneData.speed);
+
+		//生成新节点
+		var nextNode = {c: sceneData.snakeData[0].c + sceneData.direct.c ,
+						r: sceneData.snakeData[0].r + sceneData.direct.r };
+		var nextsceneData = sceneData.data[ nextNode.r ][ nextNode.c] ;
+
+		//下一点为蛇身
+		if(nextsceneData.type == 1){
+			//蛇身
+
+			for(var i=0; i<sceneData.snakeData.length; i++){
+				//console.log(sceneData.snakeData[i]);
+				if(sceneData.snakeData[i].c == nextNode.c && sceneData.snakeData[i].r == nextNode.r){
+					//console.log(i);
+					break;
+				}
+					//var snakeNode = sceneData.snakeData[i];
+					//sceneData.data[ snakeNode.r ][ snakeNode.c ].type = 0;
+			}
+
+			for(var j = i; j<sceneData.snakeData.length; j++){
+				sceneData.data[sceneData.snakeData[j].r][sceneData.snakeData[j].c].type = 3;
+			}
+			for(var j = i; j<sceneData.snakeData.length; j++){
+				sceneData.snakeData.pop();
+			}
+		}
+
+		//移除现有蛇
+		for(var i=0; i<sceneData.snakeData.length; i++){
+			var snakeNode = sceneData.snakeData[i];
+			sceneData.data[ snakeNode.r ][ snakeNode.c ].type = 0;
+		}
+
+		//判断下一节点类型
+		if(nextsceneData.type == 0){
+				//场地
+				//删除最后结尾节点
+				sceneData.snakeData.pop();
+				sceneData.snakeData.unshift(nextNode);
+		}
+		else if(nextsceneData.type == 2){
+				//熔岩
+				//删除最后结尾节点
+				sceneData.snakeData.pop();
+		}
+		else if(nextsceneData.type == 3){
+				//食物
+				sceneData.snakeData.unshift(nextNode);
+				foodCount--;
+		}
+
+		//更新场景的数据
+		for(var i=0; i<sceneData.snakeData.length; i++){
+			var snakeNode = sceneData.snakeData[i];
+			sceneData.data[ snakeNode.r ][ snakeNode.c ].type = 1;
+		}
+
+		if(isDead()){
+			display.innerText = "你死了伙计";
+
+			gameOver();
+			allShallBurn();
+			refreshView();
+		}
+		else{
+			count();
+			if(sceneData.snakeData.length -1 == countMax)
+			{
+				//console.log("win");
+				gameWin();
+			}
+		}
+		
+
+
+		//变长减速
+		if(sceneData.snakeData.length < 10){
+			sceneData.speed = 100 + 5 * (sceneData.snakeData.length - 1);
+			//console.log(sceneData.speed);
+		}
+
+
+		refreshView();
+	}
+
+	function count(){
+		var text;
+		text = "吞噬晶矿：";
+		text += sceneData.snakeData.length - 1;
+		text += " / ";
+		text += countMax;
+
+		display.innerText = text;
+
+	}
+
+var a;
+
+	function gameWin(){
+		gameOver();
+		a = 0;
+		evolution();
+
+		//allShallBurn();
+		display.innerText = "存活成功";
+
+	}
+var t2
+
+	function evolution(){
+		if(a <= countMax){
+			t2 = setTimeout(evolution, 200);
+			var snakeNode = sceneData.snakeData[a]
+			sceneData.data[snakeNode.r][snakeNode.c].type = 4;
+			refreshView();
+			a = a + 1;
+		}
+		else {
+			allShallBurn();
+			refreshView();
+
+		}
+
+	}
+
+	function isDead(){
+		if(sceneData.snakeData.length == 0)
+			return 1;
+		else 
+			return 0;
+	}
+
+	function allShallBurn(){
+		for( var r =0; r< sceneData.data.length; r++){
+			var rdata = sceneData.data[r];
+			for(var c=0; c< rdata.length; c++){
+				var data = sceneData.data[r][c];
+				if(data.type != 2 && data.type != 4){
+					data.type = 2;
+				}
+			}
+		}
+	}
+
+	function space(){
+		//console.log("R");
+
+		if(gaming){
+			display.innerText = "按R键开始";
+			gameOver();
+			allShallBurn();
+			refreshView();
+		}else{
+			clearAndStart();
+		}
+	}
+
+	function clearAndStart(){
+		sceneData.data.length = 0;
+		sceneData.snakeData.length = 0;
+		sceneData.direct = {r:0, c: -1};
+		foodCount = 0;
+
+		sceneData.speed = 100;
+		clearTimeout(t);
+		clearTimeout(t2);
+
+
+		gameInit();
+
+		gameStart();
+	}
+	//按键捕捉
+	document.onkeydown=function(e){
+		//console.log(e.keyCode);
+		if(gaming){
+			if((sceneData.data[sceneData.snakeData[0].r][sceneData.snakeData[0].c - 1].type != 1) && (e.keyCode == 37 || e.keyCode == 65)){//左
+				sceneData.direct = {r:0, c: -1};
+			}else if((sceneData.data[sceneData.snakeData[0].r - 1][sceneData.snakeData[0].c].type != 1) && (e.keyCode == 38 || e.keyCode == 87)){//上
+				sceneData.direct = {r:-1, c: 0};
+			}else if((sceneData.data[sceneData.snakeData[0].r][sceneData.snakeData[0].c + 1].type != 1) && (e.keyCode == 39 || e.keyCode == 68)){//右
+				sceneData.direct = {r:0, c: 1};
+			}else if((sceneData.data[sceneData.snakeData[0].r + 1][sceneData.snakeData[0].c].type != 1) && (e.keyCode == 40 || e.keyCode == 83)){//下
+				sceneData.direct = {r:1, c: 0};
+			}
+		}
+
+		//按R
+		if(e.keyCode == 82){
+			space();
+		}
+	}
+
+
+</script>
