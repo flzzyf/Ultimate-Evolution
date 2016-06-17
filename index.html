@@ -1,7 +1,52 @@
-<!DOCTYPE html>
-<html>
-<body>
-<h1>Hell World</h1>
-<p>gagaga</p>
-</body>
-</html>
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+class Date
+{
+public: 
+	int year, month, day;
+};
+
+int main() {
+	Date dt[2] = {{1, 2, 3}, {4, 5, 6}};
+	Date ts[3] = {{7, 2, 3}, {8, 5, 6}, {9, 5, 6}};
+	int c1 = 2, c2 = 3;
+
+	ofstream os ("ZYF.txt", ios_base::out|ios_base::binary);
+
+	os << c1;
+	for(int i = 0; i < c1; i++)
+	{
+		os.write(reinterpret_cast<char*>(&dt[i]), sizeof(dt[i]));
+	}
+
+	os << c2;
+	for(int i = 0; i < c2; i++)
+	{
+		os.write(reinterpret_cast<char*>(&ts[i]), sizeof(ts[i]));
+	}
+
+	os.close();
+
+	//输出
+	ifstream is ("ZYF.txt", ios_base::in|ios_base::binary);
+	if (is)
+	{
+		Date dt2;
+		int a = 2;
+		while(a--)
+		{
+			is >> c1;
+			for(int i = 0; i < c1; i++)
+			{
+				is.read(reinterpret_cast<char*>(&dt2), sizeof(dt2));
+				cout<<dt2.month<<endl;
+			}
+		}
+
+	}
+	is.close();
+
+	return 0;
+}
